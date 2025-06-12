@@ -34,13 +34,6 @@ class CodeGeneratorServiceTest {
     @TempDir
     Path tempDir;
 
-//    @BeforeEach
-//    void setup() throws IOException {
-//        props.setOutputDir(tempDir.toString());
-//
-//        FileService fileService = new LocalFileService(props);
-//        codeGeneratorService = new CodeGeneratorService(props,fileService);
-//    }
 
     @Test
     void testGetter() {
