@@ -45,10 +45,7 @@ public class LocalFileServiceImp implements FileService{
             return specFile;
         }).subscribeOn(Schedulers.boundedElastic());
     }
-
-    /**
-     * Reactive wrapper to zip a directory
-     */
+    
     @Override
     public Mono<Path> zipFile(Path sourceDir, Path outputDir) {
         return Mono.fromCallable(() -> {
@@ -58,9 +55,6 @@ public class LocalFileServiceImp implements FileService{
         }).subscribeOn(Schedulers.boundedElastic());
     }
 
-    /**
-     * Reactive wrapper for Multipart to File conversion
-     */
     @Override
     public Mono<File> convertMultipartToFile(MultipartFile multipartFile, Path targetDir) {
         return Mono.fromCallable(() -> {
@@ -84,9 +78,7 @@ public class LocalFileServiceImp implements FileService{
         }).subscribeOn(Schedulers.boundedElastic());
     }
 
-    /**
-     * Delete file synchronously (can also be wrapped if needed)
-     */
+
     @Override
     public void deleteFile(File file) {
         if (file != null && file.exists()) {
