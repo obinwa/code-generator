@@ -27,11 +27,13 @@ public class CodeGeneratorService {
     private final CodeGenProperties props;
     private Path outputDirectory;
     private final FileService fileService;
+    private final FileDownloader swaggerDownloader;
 
 
-    public CodeGeneratorService(CodeGenProperties props, FileService fileService) {
+    public CodeGeneratorService(CodeGenProperties props, FileService fileService,FileDownloader swaggerDownloader) {
         this.props = props;
         this.fileService = fileService;
+        this.swaggerDownloader = swaggerDownloader;
     }
 
     @PostConstruct
@@ -51,12 +53,18 @@ public class CodeGeneratorService {
      * Generates code from a remote OpenAPI spec URL.
      */
     public Mono<CodeGenResponse> generateCode(CodeGenRequest request) {
-        return getFileFromUrl(request.getOpenApiSpecUrl())
-                .flatMap(specFile -> generateCodeInternal(specFile, request.getLanguage()));
+        return swaggerDownloader.downloadSwaggerFromUrl(request.getOpenApiSpecUrl())
+                .flatMap(specFile -> generateCodeInternal(specFile.toFile(), request.getLanguage()));
     }
 
+    // TODO: Replace with code that separates code genenration from zipping
     private Mono<File> getFileFromUrl(String url) {
-        // TODO: Replace with actual Webclient HTTP call to download file, write to disk
+        //swaggerDownloader.downloadSwaggerFromUrl(url)
+                //.flatMap(codegenService::generateFromSpec)
+                //.flatMap(codegenService::uploadZipToBucket)
+               // .map(bucketUrl -> ServerResponse.ok().bodyValue(new CodegenResponse(bucketUrl)))
+                //.onErrorResume(error -> ServerResponse.status(500).bodyValue(error.getMessage()));
+
         return Mono.error(new UnsupportedOperationException("Remote file download not implemented"));
     }
 
