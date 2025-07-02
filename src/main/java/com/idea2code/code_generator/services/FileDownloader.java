@@ -2,6 +2,7 @@ package com.idea2code.code_generator.services;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -37,14 +38,15 @@ public class FileDownloader {
         return webClient
             .get()
             .uri(fileUrl)
-            .accept(MediaType.APPLICATION_OCTET_STREAM)
+            .accept(MediaType.APPLICATION_YAML)
             .retrieve()
             .bodyToFlux(DataBuffer.class)
-            .publishOn(Schedulers.boundedElastic())
-            .flatMap(dataBuffer -> writeToFile(dataBuffer, tempFilePath))
+            .publishOn(Schedulers.boundedElastic()) // file I/O is blocking
+            .transform(flux -> DataBufferUtils.write(flux, tempFilePath, StandardOpenOption.CREATE))
             .then(Mono.just(tempFilePath))
-            .doOnSuccess(path -> logSuccess(fileUrl, path))
-            .doOnError(error -> logFailure(fileUrl, error));
+            .doOnSubscribe(sub -> log.info("Starting download for: {}", fileUrl))
+            .doOnSuccess(path -> log.info("Downloaded and saved to: {}", path))
+            .doOnError(error -> log.error("Failed to download {}: {}", fileUrl, error.getMessage(), error));
     }
 
     private Mono<Void> writeToFile(DataBuffer buffer, Path path) {

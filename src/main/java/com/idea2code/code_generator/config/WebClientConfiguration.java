@@ -29,7 +29,7 @@ public class WebClientConfiguration {
     @Bean
     public WebClient webClient() {
         int connectTimeout = codeGenProperties.getConnectTimeoutMs() == 0 ? 3000 : codeGenProperties.getConnectTimeoutMs();
-        long readTimeout = codeGenProperties.getReadTimeoutMs() == 0 ? 5000 : codeGenProperties.getReadTimeoutMs();
+        long readTimeout = codeGenProperties.getReadTimeoutMs() == 0 ? 10000 : codeGenProperties.getReadTimeoutMs();
         long writeTimeout = codeGenProperties.getWriteTimeoutMs() == 0 ? 5000 : codeGenProperties.getWriteTimeoutMs();
         LogLevel logLevel = LogLevel.INFO;
         ConnectionProvider connectionProvider = ConnectionProvider.builder("code-gen-webclient-conn-pool")

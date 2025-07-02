@@ -14,6 +14,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter
 public class CodeGenProperties {
     private String outputDir = "/codegen";
+    private String outputZipDir = "/zip-codegen";
     private String inputFile = "spec.yaml";
     private String outputFile = "output.zip";
     private int connectTimeoutMs;

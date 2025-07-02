@@ -26,6 +26,7 @@ import java.nio.file.*;
 public class CodeGeneratorService {
     private final CodeGenProperties props;
     private Path outputDirectory;
+    private Path outputZipDirectory;
     private final FileService fileService;
     private final FileDownloader swaggerDownloader;
 
@@ -38,7 +39,9 @@ public class CodeGeneratorService {
 
     @PostConstruct
     private void createOutputDirectory() {
+
         outputDirectory = fileService.createDirectory(props.getOutputDir());
+        outputZipDirectory = fileService.createDirectory(props.getOutputZipDir());
     }
 
     /**
@@ -52,21 +55,29 @@ public class CodeGeneratorService {
     /**
      * Generates code from a remote OpenAPI spec URL.
      */
-    public Mono<CodeGenResponse> generateCode(CodeGenRequest request) {
+    public Mono<CodeGenResponse> generateCodeOld(CodeGenRequest request) {
         return swaggerDownloader.downloadSwaggerFromUrl(request.getOpenApiSpecUrl())
                 .flatMap(specFile -> generateCodeInternal(specFile.toFile(), request.getLanguage()));
     }
 
-    // TODO: Replace with code that separates code genenration from zipping
-    private Mono<File> getFileFromUrl(String url) {
-        //swaggerDownloader.downloadSwaggerFromUrl(url)
-                //.flatMap(codegenService::generateFromSpec)
-                //.flatMap(codegenService::uploadZipToBucket)
-               // .map(bucketUrl -> ServerResponse.ok().bodyValue(new CodegenResponse(bucketUrl)))
-                //.onErrorResume(error -> ServerResponse.status(500).bodyValue(error.getMessage()));
 
-        return Mono.error(new UnsupportedOperationException("Remote file download not implemented"));
+    public Mono<CodeGenResponse> generateCode(CodeGenRequest request) {
+        return swaggerDownloader.downloadSwaggerFromUrl(request.getOpenApiSpecUrl())
+                .flatMap(specFile ->
+                        Mono.fromCallable(() -> convertSpecToCode(specFile, request.getLanguage(), outputDirectory))
+                                .subscribeOn(Schedulers.boundedElastic())
+                )
+                .flatMap(generatedDir ->
+                        fileService.zipFile( generatedDir,outputZipDirectory) // assumed to return Mono<File or Path>
+                )
+                .map(zippedFile -> CodeGenResponse.builder()
+                        .downloadUrl(zippedFile.toString())
+                        .status("SUCCESS")
+                        .build())
+                .doOnSuccess(res -> log.info("Generated code and zipped to: {}", res.getDownloadUrl()))
+                .doOnError(e -> log.error("Error during code generation", e));
     }
+
 
     /**
      * Internal logic for generating code and zipping result.
@@ -79,7 +90,9 @@ public class CodeGeneratorService {
                         .downloadUrl(zippedFile.toString())
                         .status("SUCCESS")
                         .build())
-                .doFinally(signal -> fileService.deleteFile(specFile));
+                .doOnSubscribe(sub -> log.info("Starting code generation for file: {}", specFile))
+                .doOnSuccess(res -> log.info("Generated code and zipped to: {}", res.getDownloadUrl()))
+                .doOnError(e -> log.error("Error during code generation", e));
     }
 
     /**

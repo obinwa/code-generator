@@ -111,6 +111,9 @@ public class LocalFileServiceImp implements FileService{
                             throw new CodeGeneratorException(HttpStatus.BAD_REQUEST, "Failed to zip directory");
                         }
                     });
+        }catch (IOException e) {
+            log.error("Failed to create zip file: {}", zipFile, e);
+            throw e;
         }
     }
 }
