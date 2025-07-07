@@ -61,7 +61,6 @@ public class CodeGeneratorService {
    * Test s3 upload
    */
   public Mono<String> uploadGeneratedCode(FilePart file) {
-    log.info("in general service class");
     return fileUploader.upload(file.content());
   }
 

@@ -37,17 +37,6 @@ public class CodeGeneratorController {
   }
 
 
-//    @PostMapping(
-//            value = "/generate",
-//            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-//    )
-//    public Mono<CodeGenResponse> generateCode(
-//            @RequestParam("file") MultipartFile specification,
-//            @RequestParam String language
-//    ) throws IOException {
-//        return codeGeneratorService.generateCode(specification, language);
-//    }
-
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   public Mono<CodeGenResponse> generateCode(
     @RequestBody CodeGenRequest codeGenRequest

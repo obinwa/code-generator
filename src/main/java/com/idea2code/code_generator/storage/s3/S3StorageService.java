@@ -49,7 +49,6 @@ public class S3StorageService implements StorageService {
     metadata.put("filename", filename);
 
     UploadState uploadState = new UploadState(s3props.getBucket(), fileKey);
-    log.info("In service for s3 upload");
     CompletableFuture<CreateMultipartUploadResponse> uploadRequest = s3client.createMultipartUpload(
       CreateMultipartUploadRequest.builder()
         .contentType("application/zip")
@@ -112,7 +111,6 @@ public class S3StorageService implements StorageService {
 
   private Mono<CompletedPart> uploadPart(UploadState uploadState, DataBuffer buffer) {
     final int partNumber = ++uploadState.partCounter;
-    log.info("In upload parts function {}", partNumber);
     CompletableFuture<UploadPartResponse> request = s3client.uploadPart(
       UploadPartRequest.builder()
         .bucket(uploadState.getBucket())
@@ -154,7 +152,6 @@ public class S3StorageService implements StorageService {
 
   private void checkResult(SdkResponse response) {
     if (response.sdkHttpResponse() == null || !response.sdkHttpResponse().isSuccessful()) {
-      log.info("failed to upload file to s3");
       throw new FileStorageException("Failed to upload file to S3. Response: " +
         (response.sdkHttpResponse() != null ?
           response.sdkHttpResponse().statusCode() : "null"));
@@ -162,7 +159,6 @@ public class S3StorageService implements StorageService {
   }
 
   private Mono<CompleteMultipartUploadResponse> completeUpload(UploadState uploadState){
-    log.info("In upload completion function");
     CompletedMultipartUpload multipartUpload = CompletedMultipartUpload.builder()
       .parts(uploadState.completedParts.values())
       .build();
