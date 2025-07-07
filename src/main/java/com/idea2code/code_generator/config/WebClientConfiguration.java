@@ -24,38 +24,38 @@ import static io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS;
 @Configuration
 @RequiredArgsConstructor
 public class WebClientConfiguration {
-    private final CodeGenProperties codeGenProperties;
+  private final CodeGenProperties codeGenProperties;
 
-    @Bean
-    public WebClient webClient() {
-        int connectTimeout = codeGenProperties.getConnectTimeoutMs() == 0 ? 3000 : codeGenProperties.getConnectTimeoutMs();
-        long readTimeout = codeGenProperties.getReadTimeoutMs() == 0 ? 10000 : codeGenProperties.getReadTimeoutMs();
-        long writeTimeout = codeGenProperties.getWriteTimeoutMs() == 0 ? 5000 : codeGenProperties.getWriteTimeoutMs();
-        LogLevel logLevel = LogLevel.INFO;
-        ConnectionProvider connectionProvider = ConnectionProvider.builder("code-gen-webclient-conn-pool")
-                .maxConnections(100)
-                .maxIdleTime(Duration.ofMillis(6000))
-                .maxLifeTime(Duration.ofMillis(7000))
-                .evictInBackground(Duration.ofMillis(7000))
-                .build();
-        HttpClient httpClient = HttpClient.create(connectionProvider)
-                .secure(sslContextSpec -> {
-                    try {
-                        sslContextSpec.sslContext(
-                                SslContextBuilder.forClient()
-                                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
-                                        .build());
-                    } catch (SSLException e) {
-                        throw new RuntimeException(e);
-                    }
-                }).
-                doOnConnected(conn -> conn.addHandlerFirst(new ReadTimeoutHandler(readTimeout, TimeUnit.MILLISECONDS)
-                ).addHandlerLast(new WriteTimeoutHandler(writeTimeout, TimeUnit.MILLISECONDS)))
-                .option(CONNECT_TIMEOUT_MILLIS, connectTimeout)
-                .wiretap("reactor.netty.http.client.HttpClient", logLevel, AdvancedByteBufFormat.TEXTUAL)
-                .followRedirect(true)
-                .responseTimeout(Duration.ofMillis(readTimeout));
-        ClientHttpConnector connector = new ReactorClientHttpConnector(httpClient);
-        return WebClient.builder().clientConnector(connector).build();
-    }
+  @Bean
+  public WebClient webClient() {
+    int connectTimeout = codeGenProperties.getConnectTimeoutMs() == 0 ? 3000 : codeGenProperties.getConnectTimeoutMs();
+    long readTimeout = codeGenProperties.getReadTimeoutMs() == 0 ? 10000 : codeGenProperties.getReadTimeoutMs();
+    long writeTimeout = codeGenProperties.getWriteTimeoutMs() == 0 ? 5000 : codeGenProperties.getWriteTimeoutMs();
+    LogLevel logLevel = LogLevel.INFO;
+    ConnectionProvider connectionProvider = ConnectionProvider.builder("code-gen-webclient-conn-pool")
+      .maxConnections(100)
+      .maxIdleTime(Duration.ofMillis(6000))
+      .maxLifeTime(Duration.ofMillis(7000))
+      .evictInBackground(Duration.ofMillis(7000))
+      .build();
+    HttpClient httpClient = HttpClient.create(connectionProvider)
+      .secure(sslContextSpec -> {
+        try {
+          sslContextSpec.sslContext(
+            SslContextBuilder.forClient()
+              .trustManager(InsecureTrustManagerFactory.INSTANCE)
+              .build());
+        } catch (SSLException e) {
+          throw new RuntimeException(e);
+        }
+      }).
+      doOnConnected(conn -> conn.addHandlerFirst(new ReadTimeoutHandler(readTimeout, TimeUnit.MILLISECONDS)
+      ).addHandlerLast(new WriteTimeoutHandler(writeTimeout, TimeUnit.MILLISECONDS)))
+      .option(CONNECT_TIMEOUT_MILLIS, connectTimeout)
+      .wiretap("reactor.netty.http.client.HttpClient", logLevel, AdvancedByteBufFormat.TEXTUAL)
+      .followRedirect(true)
+      .responseTimeout(Duration.ofMillis(readTimeout));
+    ClientHttpConnector connector = new ReactorClientHttpConnector(httpClient);
+    return WebClient.builder().clientConnector(connector).build();
+  }
 }

@@ -1,11 +1,13 @@
-package com.idea2code.code_generator.file;
+package com.idea2code.code_generator.storage.file;
 
 import com.idea2code.code_generator.config.CodeGenProperties;
 import com.idea2code.code_generator.exception.CodeGeneratorException;
+import com.idea2code.code_generator.storage.StorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -17,7 +19,7 @@ import java.util.zip.ZipOutputStream;
 
 @Service
 @Slf4j
-public class LocalFileServiceImp implements FileService{
+public class LocalFileServiceImp implements FileService, StorageService {
 
     private final CodeGenProperties props;
 
@@ -89,6 +91,18 @@ public class LocalFileServiceImp implements FileService{
         }
     }
 
+    @Override
+    public Mono<String> upload(Object content){
+        if (content instanceof InputStream) {
+            return Mono.empty(); //uploadWithInputStream(bucket, key, (InputStream) content);
+        } else if (content instanceof Flux) {
+            return Mono.empty(); //uploadWithFlux(bucket, key, (Flux<DataBuffer>) content);
+        } else {
+            return Mono.error(new IllegalArgumentException("Unsupported content type"));
+        }
+
+    }
+
     /**
      * Internal zip logic
      */
@@ -114,6 +128,26 @@ public class LocalFileServiceImp implements FileService{
         }catch (IOException e) {
             log.error("Failed to create zip file: {}", zipFile, e);
             throw e;
+        }
+    }
+
+    private static class DeleteOnCloseFileInputStream extends FileInputStream {
+        private final Path tempFile;
+
+        public DeleteOnCloseFileInputStream(Path tempFile) throws FileNotFoundException {
+            super(tempFile.toFile());
+            this.tempFile = tempFile;
+        }
+
+        @Override
+        public void close() throws IOException {
+            super.close();
+            try {
+                Files.deleteIfExists(tempFile);
+            } catch (IOException e) {
+                // Log warning but don't throw
+                System.err.println("Warning: Could not delete temp file: " + tempFile);
+            }
         }
     }
 }

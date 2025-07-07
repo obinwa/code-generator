@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class CodeGenResponse {
-    private String downloadUrl;
-    private String status;
+  private String downloadUrl;
+  private String status;
 }
